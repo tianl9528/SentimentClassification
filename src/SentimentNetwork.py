@@ -4,8 +4,9 @@ import numpy as np
 import time
 import sys
 
+
 class SentimentNetwork:
-    def __init__(self, reviews, lablas, min_count = 10, polarity_cutoff = 0.1, hidden_nodes = 10, learning_rate = 0.1):
+    def __init__(self, reviews, lablas, min_count=10, polarity_cutoff=0.1, hidden_nodes=10, learning_rate=0.1):
         # 设置随机因子
         np.random.seed(1)
 
@@ -13,9 +14,7 @@ class SentimentNetwork:
         self.pre_process_data(reviews, lablas, polarity_cutoff, min_count)
 
         # 初始化网络
-        self.init_network(len(self.review_vocab),hidden_nodes, 1,learning_rate)
-
-
+        self.init_network(len(self.review_vocab), hidden_nodes, 1, learning_rate)
 
     def pre_process_data(self, reviews, labels, polarity_cutoff, min_count):
         positive_counts = Counter()
@@ -36,14 +35,14 @@ class SentimentNetwork:
 
         for word, cnt in list(total_counts.most_common()):
             if cnt > 50:
-                pos_neg_ratio =positive_counts[word] / float(negative_counts[word]+1)
+                pos_neg_ratio = positive_counts[word] / float(negative_counts[word] + 1)
                 pos_neg_ratios[word] = pos_neg_ratio
 
         for word, ratio in pos_neg_ratios.most_common():
             if ratio > 1:
                 pos_neg_ratios[word] = np.log(ratio)
             else:
-                pos_neg_ratios[word] = -np.log((1/(ratio+0.01)))
+                pos_neg_ratios[word] = -np.log((1 / (ratio + 0.01)))
 
         review_vocab = set()
         for review in reviews:
@@ -67,7 +66,7 @@ class SentimentNetwork:
         self.label_vocab_size = len(self.label_vocab)
 
         self.word2index = {}
-        for i,word in enumerate(self.review_vocab):
+        for i, word in enumerate(self.review_vocab):
             self.word2index[word] = i
 
         self.label2index = {}
@@ -81,21 +80,20 @@ class SentimentNetwork:
 
         self.learning_rate = learning_rate
 
-        self.weights_0_1 = np.zeros((self.input_nodes,self.hidden_nodes))
+        self.weights_0_1 = np.zeros((self.input_nodes, self.hidden_nodes))
 
-        self.weights_1_2 = np.random.normal(0.0,self.output_nodes**-0.5,(self.hidden_nodes,self.output_nodes))
+        self.weights_1_2 = np.random.normal(0.0, self.output_nodes ** -0.5, (self.hidden_nodes, self.output_nodes))
 
-        self.layer_1 = np.zeros((1,hidden_nodes))
+        self.layer_1 = np.zeros((1, hidden_nodes))
 
-
-    def get_target_for_label(self,label):
+    def get_target_for_label(self, label):
         if label == "positive":
             return 1
         else:
             return 0
 
-    def sigmoid(self,x):
-        return 1/(1+np.exp(-x))
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
 
     def sigmoid_output_2_derivative(self, output):
         return output * (1 - output)
@@ -109,7 +107,7 @@ class SentimentNetwork:
                     indices.add(self.word2index[word])
             train_reviews.append(list(indices))
 
-        assert len(train_reviews)==len(train_labels)
+        assert len(train_reviews) == len(train_labels)
 
         corrent_so_far = 0
 
@@ -138,21 +136,20 @@ class SentimentNetwork:
                 self.weights_0_1[index] -= layer_1_delta[0] * self.learning_rate
 
             if (layer_2 > 0.5 and label == 'positive'):
-                corrent_so_far +=1
+                corrent_so_far += 1
             elif (layer_2 < 0.5 and label == 'negative'):
-                corrent_so_far +=1
+                corrent_so_far += 1
 
-            elapsed_time = float(time.time()-start)
+            elapsed_time = float(time.time() - start)
             reviews_per_second = i / elapsed_time if elapsed_time > 0 else 0
 
-            sys.stdout.write('\r进度:'+str(100*i/float(len(train_reviews)))[:4]\
-                             + '% \t速度(条/秒):'+str(reviews_per_second)[0:5]\
-                             + '\t#正确预测数:'+str(corrent_so_far)\
-                             + '\t#已训练:'+str(i+1)\
-                             + '\t训练准确率:'+str(corrent_so_far*100/float(i+1))[0:4]+'%')
-            if i % 5000 ==0:
+            sys.stdout.write('\r进度:' + str(100 * i / float(len(train_reviews)))[:4] \
+                             + '% \t速度(条/秒):' + str(reviews_per_second)[0:5] \
+                             + '\t#正确预测数:' + str(corrent_so_far) \
+                             + '\t#已训练:' + str(i + 1) \
+                             + '\t训练准确率:' + str(corrent_so_far * 100 / float(i + 1))[0:4] + '%')
+            if i % 5000 == 0:
                 print('')
-
 
     def run(self, review):
         self.layer_1 *= 0
@@ -171,7 +168,7 @@ class SentimentNetwork:
         elif layer_2 < 0.5:
             return 'negative'
 
-    def test(self,testing_reviews, testing_labels):
+    def test(self, testing_reviews, testing_labels):
 
         correct = 0
 
@@ -189,4 +186,3 @@ class SentimentNetwork:
                              + '\t#正确预测数:' + str(correct) \
                              + '\t#已测试:' + str(i + 1) \
                              + '\t测试准确率:' + str(correct * 100 / float(i + 1))[:4] + '%')
-
